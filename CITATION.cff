@@ -3,7 +3,10 @@ message: "If you use this software in academic work, please cite the associated 
 title: "Geometry-Guided Regridding (GGR)"
 type: software
 authors:
-  - name: "Geometry-Guided Regridding contributors"
+  - family-names: "Mutashar"
+    given-names: "Mustafa Q."
+  - family-names: "Almayahi"
+    given-names: "Ali Z."
 repository-code: "https://github.com/mustafamutashar/Geometry-Guided-Regridding-GGR"
 license: MIT
 version: 1.0.0
