@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software in academic work, please cite the associated publication."
+title: "Geometry-Guided Regridding (GGR)"
+type: software
+authors:
+  - name: "Geometry-Guided Regridding contributors"
+repository-code: "https://github.com/mustafamutashar/Geometry-Guided-Regridding-GGR"
+license: MIT
+version: 1.0.0
+date-released: 2026-10-07
