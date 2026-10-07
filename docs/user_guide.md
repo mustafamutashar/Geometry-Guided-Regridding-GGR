@@ -168,6 +168,7 @@ The analysis command reports:
 
 - Local Imprint Index (LII);
 - LII reduction relative to the control;
+- five-point Laplacian near-line/far-field ratio and reduction relative to the control;
 - surface MAE relative to the control;
 - surface RMSE relative to the control;
 - 95th percentile of absolute surface change;
@@ -183,6 +184,7 @@ Output tables include:
 
 ```text
 GGR_full_metrics.csv
+GGR_distance_band_metrics.csv
 Control_vs_Original_QA.csv
 GGR_sensitivity_all_36x10.csv
 GGR_sensitivity_selection_counts.csv
@@ -245,9 +247,9 @@ The code intentionally raises errors when incompatible grids are detected.
 
 ## 13. Field-data availability
 
-The original field seismic interpretation data and Petrel-derived structural surfaces are not distributed in this repository when restricted by data ownership or access conditions.
+The original field seismic interpretation data and Petrel-derived structural surfaces are not distributed in this repository. Any applicable ownership or access conditions should be documented in the manuscript Data Availability statement.
 
-The demonstration dataset provides an open test case for the computational procedures that can be shared independently of the restricted field data.
+The demonstration dataset provides an open test case for the computational procedures independently of the field data.
 
 ## 14. Citation
 
