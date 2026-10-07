@@ -126,7 +126,7 @@ pip install -r requirements.txt
 Example:
 
 ```bash
-python src/ggr_workflow.py
+python ggr_workflow.py
 ```
 
 Detailed instructions, expected inputs, outputs, and example workflows are provided in `docs/user_guide.md`.
