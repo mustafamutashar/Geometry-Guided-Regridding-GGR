@@ -31,20 +31,18 @@ Geometry-Guided-Regridding-GGR/
 ├── CITATION.cff
 ├── ALGORITHM_S1.md
 │
-├── src/
-│   └── ggr_workflow.py
+├── ggr_workflow.py
 │
 ├── examples/
-│   └── synthetic_example/
-│
-├── data/
-│   └── synthetic/
+│   └── demonstration_dataset/
+│       ├── README.md
+│       └── generate_demo.py
 │
 ├── docs/
 │   └── user_guide.md
 │
 └── tests/
-    └── test_workflow.py
+    └── smoke_test.py
 ```
 
 ## Computational components
@@ -90,18 +88,20 @@ For each parameter combination, imprint-reduction benefit and surface-modificati
 
 The preferred exclusion distance is therefore selected as a trade-off between reducing line-related imprint and limiting unnecessary modification of the structural surface.
 
-## Synthetic example
+## Demonstration dataset
 
-A synthetic dataset is included to demonstrate the open computational stages of the GGR workflow.
+A deterministic synthetic demonstration is included only to test and illustrate the open computational stages of the GGR workflow.
 
-The synthetic example is provided for:
+**All numerical results reported in the manuscript are derived from the field case study. The demonstration dataset is not used to generate, validate, replace, or support any field-study result.**
+
+The demonstration is provided for:
 
 - software testing;
 - method demonstration;
 - reproducibility checks;
-- sensitivity-analysis verification.
+- verification of expected program behavior.
 
-Synthetic results are not intended to reproduce the numerical results of the field case study.
+The demonstration uses SciPy interpolation solely to provide an open test case. It does not reproduce or approximate the proprietary Petrel interpolation used for the field surfaces.
 
 ## Field-data limitations
 
@@ -126,7 +126,7 @@ pip install -r requirements.txt
 Example:
 
 ```bash
-python ggr_workflow.py
+python ggr_workflow.py --help
 ```
 
 Detailed instructions, expected inputs, outputs, and example workflows are provided in `docs/user_guide.md`.
@@ -135,13 +135,19 @@ Detailed instructions, expected inputs, outputs, and example workflows are provi
 
 The repository is designed to allow independent evaluation of the open computational stages of Geometry-Guided Regridding.
 
-The synthetic example can be used to verify:
+The demonstration example can be run with:
 
-- geometry processing;
-- node exclusion;
-- diagnostic calculations;
-- sensitivity analysis;
-- expected program behavior.
+```bash
+python examples/demonstration_dataset/generate_demo.py
+```
+
+A fast executable check is also included:
+
+```bash
+python tests/smoke_test.py
+```
+
+These checks verify the open computational procedures only; they do not reproduce the confidential field dataset or the Petrel field interpolation.
 
 ## License
 
