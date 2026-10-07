@@ -52,6 +52,7 @@ The repository provides reproducible implementations for:
 - geometric distance calculation between sampled nodes and 2D seismic lines;
 - distance-based node exclusion;
 - seismic-line imprint diagnostics;
+- complementary five-point Laplacian roughness diagnostics;
 - surface difference metrics;
 - distance-band analysis;
 - broad-scale structural preservation diagnostics;
@@ -103,11 +104,11 @@ The demonstration is provided for:
 
 The demonstration uses SciPy interpolation solely to provide an open test case. It does not reproduce or approximate the proprietary Petrel interpolation used for the field surfaces.
 
-## Field-data limitations
+## Field-data scope
 
-The field structural surfaces and seismic interpretation data used in the associated study are subject to data-access and ownership restrictions and are therefore not distributed in this repository.
+The field structural surfaces and seismic interpretation data used in the associated study are not included in this repository. Any applicable data-access or ownership conditions should be stated separately in the manuscript Data Availability section.
 
-The field surfaces were reconstructed using a fixed Petrel gridding configuration. The open-source implementation provided here reproduces the geometry processing, quantitative diagnostics, sensitivity analysis, and synthetic workflow, but does not claim to reproduce proprietary Petrel interpolation internally.
+The field surfaces were reconstructed using a fixed Petrel gridding configuration. The open-source implementation provided here reproduces the geometry processing, quantitative diagnostics, sensitivity analysis, and demonstration workflow, but does not claim to reproduce Petrel interpolation internally.
 
 ## Requirements
 
@@ -147,7 +148,7 @@ A fast executable check is also included:
 python tests/smoke_test.py
 ```
 
-These checks verify the open computational procedures only; they do not reproduce the confidential field dataset or the Petrel field interpolation.
+These checks verify the open computational procedures only; they do not reproduce the field dataset or the Petrel field interpolation.
 
 ## License
 
