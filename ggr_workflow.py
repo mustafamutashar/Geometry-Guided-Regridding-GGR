@@ -40,6 +40,7 @@ BASE_NEAR_M = 250.0
 FAR_MIN_M = 1500.0
 FAR_MAX_M = 3000.0
 TREND_SIGMA_M = 1000.0
+DISTANCE_BANDS_M = [(0.0, 250.0), (250.0, 500.0), (500.0, 750.0), (750.0, 1000.0), (1000.0, 1500.0), (1500.0, 3000.0), (3000.0, np.inf)]
 SENSITIVITY_VALUES_M = np.array([150, 200, 250, 300, 400, 500], dtype=float)
 
 
@@ -208,6 +209,61 @@ def lii(z: np.ndarray, distances: np.ndarray, sigma_m: float, near_m: float) -> 
     return float(np.median(np.abs(highpass[near])) / denominator) if denominator > 0 else np.nan
 
 
+def laplacian_ratio(z: np.ndarray, distances: np.ndarray, near_m: float = BASE_NEAR_M) -> float:
+    """Near-line/far-field ratio of median absolute five-point Laplacian magnitude."""
+    lap = np.full_like(z, np.nan, dtype=float)
+    center = z[1:-1, 1:-1]
+    up = z[:-2, 1:-1]
+    down = z[2:, 1:-1]
+    left = z[1:-1, :-2]
+    right = z[1:-1, 2:]
+    valid = np.isfinite(center) & np.isfinite(up) & np.isfinite(down) & np.isfinite(left) & np.isfinite(right)
+    local = np.full_like(center, np.nan, dtype=float)
+    local[valid] = (up[valid] + down[valid] + left[valid] + right[valid] - 4.0 * center[valid]) / (GRID_CELL_M ** 2)
+    lap[1:-1, 1:-1] = local
+
+    near = np.isfinite(lap) & (distances <= near_m)
+    far = np.isfinite(lap) & (distances >= FAR_MIN_M) & (distances < FAR_MAX_M)
+    if not np.any(near) or not np.any(far):
+        return np.nan
+    denominator = np.median(np.abs(lap[far]))
+    return float(np.median(np.abs(lap[near])) / denominator) if denominator > 0 else np.nan
+
+
+def distance_band_statistics(diff: np.ndarray, distances: np.ndarray, D: int) -> list[dict[str, float | int | str]]:
+    """Summarize absolute modification and RMSE within manuscript distance bands."""
+    rows = []
+    for lower, upper in DISTANCE_BANDS_M:
+        if np.isinf(upper):
+            mask = np.isfinite(diff) & (distances >= lower)
+            label = f">{int(lower)}"
+        else:
+            mask = np.isfinite(diff) & (distances >= lower) & (distances < upper)
+            label = f"{int(lower)}-{int(upper)}"
+        values = diff[mask]
+        if values.size:
+            rows.append({
+                "D_m": int(D),
+                "Distance_band_m": label,
+                "Cell_count": int(values.size),
+                "MAE_ms": float(np.mean(np.abs(values))),
+                "RMSE_ms": float(np.sqrt(np.mean(values ** 2))),
+                "Median_abs_change_ms": float(np.median(np.abs(values))),
+                "P95_abs_change_ms": float(np.percentile(np.abs(values), 95)),
+            })
+        else:
+            rows.append({
+                "D_m": int(D),
+                "Distance_band_m": label,
+                "Cell_count": 0,
+                "MAE_ms": np.nan,
+                "RMSE_ms": np.nan,
+                "Median_abs_change_ms": np.nan,
+                "P95_abs_change_ms": np.nan,
+            })
+    return rows
+
+
 def surface_distance_grid(surface: SurfaceGrid, line_union) -> np.ndarray:
     X, Y = np.meshgrid(surface.x, surface.y)
     return nearest_line_distance(X.ravel(), Y.ravel(), line_union).reshape(surface.z.shape)
@@ -277,8 +333,12 @@ def analyze(original_xyz: str | Path, control_xyz: str | Path, ggr_dir: str | Pa
     control_lii = lii(control.z, distances, BASE_SIGMA_M, BASE_NEAR_M)
     if not np.isfinite(control_lii) or control_lii <= 0:
         raise ValueError("Control LII is invalid; check near-line and far-field coverage")
+    control_laplacian = laplacian_ratio(control.z, distances, BASE_NEAR_M)
+    if not np.isfinite(control_laplacian) or control_laplacian <= 0:
+        raise ValueError("Control Laplacian ratio is invalid; check near-line and far-field coverage")
 
     rows = []
+    band_rows = []
     surfaces: dict[int, SurfaceGrid] = {}
     for D in D_VALUES_M:
         surface = load_xyz_grid(find_surface(Path(ggr_dir), int(D)), f"GGR {D} m")
@@ -294,6 +354,9 @@ def analyze(original_xyz: str | Path, control_xyz: str | Path, ggr_dir: str | Pa
 
         lii_value = lii(surface.z, distances, BASE_SIGMA_M, BASE_NEAR_M)
         reduction = 100.0 * (1.0 - lii_value / control_lii)
+        lap_value = laplacian_ratio(surface.z, distances, BASE_NEAR_M)
+        lap_reduction = 100.0 * (1.0 - lap_value / control_laplacian)
+        band_rows.extend(distance_band_statistics(diff, distances, int(D)))
 
         pick_residual = interpolate_at_picks(surface, picks) - picks["TWT"].to_numpy(float)
         pick_mae, pick_rmse = mae_rmse(pick_residual)
@@ -303,6 +366,8 @@ def analyze(original_xyz: str | Path, control_xyz: str | Path, ggr_dir: str | Pa
             "D_m": int(D),
             "LII": lii_value,
             "LII_Reduction_pct": reduction,
+            "Laplacian_Ratio": lap_value,
+            "Laplacian_Reduction_pct": lap_reduction,
             "Surface_MAE_vs_Control_ms": surf_mae,
             "Surface_RMSE_vs_Control_ms": surf_rmse,
             "Surface_P95_abs_change_ms": p95,
@@ -321,6 +386,7 @@ def analyze(original_xyz: str | Path, control_xyz: str | Path, ggr_dir: str | Pa
     C = cost / np.nanmax(cost)
     metrics["J_D"] = np.sqrt((1.0 - B) ** 2 + C ** 2)
     metrics.to_csv(out / "GGR_full_metrics.csv", index=False)
+    pd.DataFrame(band_rows).to_csv(out / "GGR_distance_band_metrics.csv", index=False)
 
     control_diff = control.z - original.z
     valid0 = np.isfinite(control_diff)
